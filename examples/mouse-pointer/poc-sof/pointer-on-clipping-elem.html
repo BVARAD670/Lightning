@@ -1,0 +1,254 @@
+<!--
+ If not stated otherwise in this file or this component's LICENSE file the
+ following copyright and licenses apply:
+
+ Copyright 2020 Metrological
+
+ Licensed under the Apache License, Version 2.0 (the License);
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+ http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <script src="../../../devtools/lightning-inspect.js"></script>
+</head>
+
+<body style="margin: 0; padding: 0">
+  <script type="module">
+    import lng from '../../../src/lightning.mjs';
+    import BasicListMenu from './BasicListMenu/BasicListMenu.js';
+    attachInspector(lng)
+
+    window.onload = function () {
+
+      const ENABLE_POINTER = true;
+      class LeftContainer extends lng.Component {
+        _init() {
+          // 
+        }
+        _getFocused() {
+          return this.tag('LeftListMenu');
+        }
+        onItemSelect(action, item) {
+          this.parent.onLeftItemSelect(item);
+        }
+        static _template() {
+          return {
+            LeftListMenu: {
+              w: (w) => w,
+              h: (h) => h,
+              type: BasicListMenu,
+              signals: {
+                itemSelect: 'onItemSelect'
+              },
+              items: [
+                {
+                  label: 'Right Arrow',
+                  rightArrow: true,
+                  loadRightItems: [
+                    {
+                      label: 'No item to display'
+                    }
+                  ]
+                },
+                {
+                  label: 'Highlight Label:',
+                  highlightLabel: ' On',
+                  rightArrow: true,
+                  loadRightItems: [
+                    {
+                      label: 'On'
+                    },
+                    {
+                      label: 'Off'
+                    },
+                  ]
+                },
+                {
+                  label: 'Right Content',
+                  rightArrow: true,
+                  loadRightItems: [
+                    {
+                      label: 'Check',
+                      icon: 'check',
+                      iconVisible: true
+                    },
+                    {
+                      label: 'Lock',
+                      icon: 'lock',
+                      iconVisible: true
+                    },
+                    {
+                      label: 'Unlock',
+                      action: false,
+                      icon: 'unlock',
+                      iconVisible: true
+                    },
+                    {
+                      label: 'Icon Invisible',
+                      action: true,
+                      icon: 'check',
+                      iconVisible: false
+                    }
+                  ]
+                },
+                {
+                  label: 'Super Basic'
+                },
+                {
+                  label: 'Super Basic',
+                  sublabel: 'with a Sublabel'
+                },
+                {
+                  label: 'All The:',
+                  sublabel: 'Even a really really really really really really really really really really really really really ' +
+                    'really really really really really really really really really really really really really really really long subtitle. ',
+                  highlightLabel: ' Things',
+                  action: true,
+                  icon: 'check',
+                  iconVisible: true,
+                  rightArrow: true
+                }
+              ]
+            }
+          };
+        }
+      }
+      class RightContainer extends lng.Component {
+        _init() {
+          // to do
+        }
+        _getFocused() {
+          return this.tag('RightListMenu');
+        }
+        onItemSelect(action, item) {
+          this.parent.onRightItemSelect(item);
+        }
+        static _template() {
+          return {
+            RightListMenu: {
+              w: (w) => w,
+              h: (h) => h,
+              type: BasicListMenu,
+              signals: {
+                itemSelect: 'onItemSelect'
+              },
+              items: []
+            }
+          };
+        }
+      }
+      class BasicUsageExample extends lng.Application {
+        focusSide = 'left';
+        _getFocused() {
+          return (!this.focusSide || this.focusSide === 'left') ?
+            this.tag('LeftPanel') : this.tag('RightPanel');
+        }
+        onRightItemSelect(item) {
+          console.log("Selecting the right ", item._icon, item.tag('Label').text.text);
+          const highlightLabel = item.tag('Label').text.text;
+          const leftIndex = this.tag('LeftPanel.LeftListMenu')._index;
+          const iconVisible = item._iconVisible;
+          const icon = item._icon;
+          if (iconVisible && icon) {
+            this.tag('LeftPanel.LeftListMenu').tag('ScrollWrapper').children[leftIndex].patch({
+              icon,
+              iconVisible
+            });
+          } else {
+            console.log(this.tag('LeftPanel.LeftListMenu'));
+            this.tag('LeftPanel.LeftListMenu').tag('ScrollWrapper').children[leftIndex].patch({
+              iconVisible: false
+            });
+          }
+          if (highlightLabel && highlightLabel.length < 4) {
+            this.tag('LeftPanel.LeftListMenu').tag('ScrollWrapper').children[leftIndex].patch({
+              highlightLabel
+            });
+          } else {
+            this.tag('LeftPanel.LeftListMenu').tag('ScrollWrapper').children[leftIndex].patch({
+              highlightLabel: ''
+            });
+          }
+        }
+        onLeftItemSelect(item) {
+          this.tag('RightPanel.RightListMenu').items = item.loadRightItems || [];
+          setTimeout(() => {
+            if (item.loadRightItems && item.loadRightItems.length) {
+              this.focusedToRight();
+            } else {
+              this.focusedToLeft();
+            }
+          }, 300);
+        }
+        _handleLeft() {
+          this.focusedToLeft();
+        }
+        _handleRight() {
+          this.focusedToRight();
+        }
+        focusedToLeft() {
+          this.focusSide = 'left';
+          this._refocus();
+        }
+        focusedToRight() {
+          this.focusSide = 'right';
+          this._refocus();
+        }
+        static _template() {
+          return {
+            w: 850,
+            h: 750,
+            x: 20,
+            y: 50,
+            LeftPanel: {
+              w: 400,
+              h: (h) => h,
+              flex: { direction: 'column' },
+              clipping: true,
+              collision: true,
+              type: LeftContainer,
+              signals: {
+                onItemSelect: 'onLeftItemSelect'
+              },
+            },
+            RightPanel: {
+              x: 450,
+              w: 400,
+              h: (h) => h,
+              flex: { direction: 'column' },
+              clipping: true,
+              collision: true,
+              type: RightContainer,
+              signals: {
+                onItemSelect: 'onRightItemSelect'
+              },
+              items: []
+            }
+          }
+        }
+
+      }
+
+      const options = { stage: { w: 900, h: 900, clearColor: 0xFF000000, canvas2d: false, useImageWorker: false }, debug: true, enablePointer: ENABLE_POINTER }
+
+      const app = new BasicUsageExample(options);
+
+      document.body.appendChild(app.stage.getCanvas());
+    }
+  </script>
+</body>
+
+</html>

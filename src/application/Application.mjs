@@ -481,7 +481,7 @@ export default class Application extends Component {
 
     fireBottomUpClickHandler(obj) {
         const {clientX, clientY} = obj;
-        const target = this._getTargetChild(clientX, clientY);
+        const target = this._getTargetChild(clientX, clientY, 'click');
         let child = target;
 
         // Search tree bottom up for a handler
@@ -557,10 +557,10 @@ export default class Application extends Component {
         }
     }
 
-    _getTargetChild(clientX, clientY) {
+    _getTargetChild(clientX, clientY, event) {
         let children = this.stage.application.children;
         let affected = this._findChildren([], children);
-        let hoverableChildren = this._withinClickableRange(affected, clientX, clientY);
+        let hoverableChildren = this._withinClickableRange(affected, clientX, clientY, event);
 
         hoverableChildren.sort((a,b) => {
             // Sort by zIndex and then id
@@ -598,7 +598,7 @@ export default class Application extends Component {
         return bucket;
     }
 
-    _withinClickableRange(affectedChildren, cursorX, cursorY) {
+    _withinClickableRange(affectedChildren, cursorX, cursorY, event) {
         let n = affectedChildren.length;
         const candidates = [];
 
@@ -619,6 +619,9 @@ export default class Application extends Component {
             }
 
             if (child.parent.core._scissor) {
+                if (event === 'click') {
+                    console.log(event, child.parent.core._element.ref);
+                }
                 const scissor = child.parent.core._scissor.map((v) => v * precision);
                 if (!this._testCollision(cursorX, cursorY, ...scissor))
                     continue
